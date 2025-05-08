@@ -31,3 +31,11 @@ jobs:
       run: make build test clippy fmt
     - name: git diff
       run: git diff --exit-code
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Install pnpm
+      run: npm install -g pnpm
+    - name: run ccc-tests
+      run: cd ccc-tests && pnpm install && make all
