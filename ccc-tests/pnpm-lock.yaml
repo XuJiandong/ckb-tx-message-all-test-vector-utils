@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      ckb-ccc-core:
+      '@ckb-ccc/core':
         specifier: file:ckb-ccc-core-1.8.0.tgz
-        version: '@ckb-ccc/core@file:ckb-ccc-core-1.8.0.tgz(typescript@5.8.3)'
+        version: file:ckb-ccc-core-1.8.0.tgz(typescript@5.8.3)
       ckb-testtool:
         specifier: ^0.1.4
         version: 0.1.4(typescript@5.8.3)

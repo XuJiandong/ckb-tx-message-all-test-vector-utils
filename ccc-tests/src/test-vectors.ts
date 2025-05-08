@@ -1,5 +1,5 @@
-import { Cell, Hex, OutPoint, Transaction } from "ckb-ccc-core";
-import { JsonRpcTransformers } from "ckb-ccc-core/advanced";
+import { Cell, Hex, OutPoint, Transaction } from "@ckb-ccc/core";
+import { JsonRpcTransformers } from "@ckb-ccc/core/advanced";
 import { TxFile } from "ckb-testtool";
 import * as fs from 'fs';
 import * as path from 'path';
@@ -9,32 +9,35 @@ export class TestVector {
     constructor(
         public name: string,
         public tx: TxFile,
-        public hash: Hex,
-        public indices: number[]
+        public hash: Hex | null,
+        public indices: number[],
+        public invalidCase: boolean,
     ) { }
 
     static fromFiles(name: string, basePath: string): TestVector {
         const jsonPath = path.join(basePath, `${name}.json`);
         const hashPath = path.join(basePath, `${name}.hash`);
         const indicesPath = path.join(basePath, `${name}.indices`);
+        let hashHex: Hex | null = null;
         if (!fs.existsSync(jsonPath)) {
             throw new Error(`JSON file not found: ${jsonPath}`);
-        }
-        if (!fs.existsSync(hashPath)) {
-            throw new Error(`Hash file not found: ${hashPath}`);
         }
         if (!fs.existsSync(indicesPath)) {
             throw new Error(`Indices file not found: ${indicesPath}`);
         }
+        if (!fs.existsSync(hashPath)) {
+            hashHex = null;
+        } else {
+            hashHex = ("0x" + fs.readFileSync(hashPath, 'utf8').trim()) as Hex;
+        }
         const txJson = fs.readFileSync(jsonPath, 'utf8');
-        const hashHex = fs.readFileSync(hashPath, 'utf8').trim();
         const indicesJson = fs.readFileSync(indicesPath, 'utf8');
 
         try {
             const tx = JSON.parse(txJson) as TxFile;
             const indices = JSON.parse(indicesJson) as number[];
 
-            return new TestVector(name, tx, "0x" + hashHex as Hex, indices);
+            return new TestVector(name, tx, hashHex, indices, name.startsWith('invalid-'));
         } catch (error) {
             throw new Error(`Failed to parse JSON for test vector ${name}: ${error}`);
         }
@@ -48,9 +51,6 @@ export class TestVector {
         const baseNames = new Set<string>(
             files.map((file: string) => path.parse(file).name)
         );
-        const filteredBaseNames = Array.from(baseNames).filter(name => !name.startsWith('invalid-'));
-        baseNames.clear();
-        filteredBaseNames.forEach(name => baseNames.add(name));
         return Array.from(baseNames).map(baseName =>
             TestVector.fromFiles(baseName, dirPath)
         );
@@ -69,10 +69,19 @@ export class TestVector {
         let location = this.indices[0];
         let lockScript = this.tx.mock_info.inputs[location].output.lock;
 
-        let txMessageAll = await tx.getTxMessageAll(JsonRpcTransformers.scriptTo(lockScript), client);
-        if (txMessageAll?.message !== this.hash) {
-            console.log(`txMessageAll: ${txMessageAll?.message}`);
-            console.log(`this.hash: ${this.hash}`);
+        try {
+            let txMessageAll = await tx.getTxMessageAll(JsonRpcTransformers.scriptTo(lockScript), client);
+            if (!this.invalidCase && txMessageAll?.message !== this.hash) {
+                console.log(`txMessageAll: ${txMessageAll?.message}`);
+                console.log(`this.hash: ${this.hash}`);
+                throw new Error(`FAILED: ${this.name}`);
+            }
+        } catch (error) {
+            if (this.invalidCase) {
+                // ignore invalid case
+            } else {
+                throw error;
+            }
         }
     }
 }

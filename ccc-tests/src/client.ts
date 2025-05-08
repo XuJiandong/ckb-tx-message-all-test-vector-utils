@@ -22,11 +22,11 @@ import {
     ScriptInfo,
     ScriptLike,
     TransactionLike,
-} from "ckb-ccc-core";
+} from "@ckb-ccc/core";
 
 import {
     ClientCollectableSearchKeyLike,
-} from "ckb-ccc-core/advanced";
+} from "@ckb-ccc/core/advanced";
 
 export class MockClient extends Client {
     constructor(public cells: Map<string, Cell>) {

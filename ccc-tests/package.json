@@ -14,7 +14,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.8.1",
   "dependencies": {
-    "ckb-ccc-core": "file:ckb-ccc-core-1.8.0.tgz",
+    "@ckb-ccc/core": "file:ckb-ccc-core-1.8.0.tgz",
     "ckb-testtool": "^0.1.4",
     "typescript": "^5.8.3"
   }
